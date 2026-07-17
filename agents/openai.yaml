@@ -1,0 +1,4 @@
+interface:
+  display_name: "西瓜-IP型产品设计"
+  short_description: "把用户证据与IP方法转成有故事、有传播力、能承接服务的产品"
+  default_prompt: "使用 $ip-product-design，从我的用户证据、服务卡点和IP方法出发，设计一个有可信故事转折、可传播结果和自然商业承接的IP型产品。"

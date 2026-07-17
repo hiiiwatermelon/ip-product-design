@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>产品定义工作台</title>
+  <style>
+    :root {
+      --paper: #f3f0e9;
+      --surface: #fffdf8;
+      --ink: #171815;
+      --muted: #717269;
+      --line: #d9d5ca;
+      --blue: #1768e5;
+      --blue-soft: #eaf2ff;
+      --green: #21784f;
+      --green-soft: #e8f5ee;
+      --amber: #a55b00;
+      --amber-soft: #fff1d8;
+      --red: #a33b32;
+      --red-soft: #fbecea;
+      --shadow: 0 18px 60px rgba(31, 33, 27, 0.08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 2%, rgba(23, 104, 229, 0.09), transparent 24rem),
+        linear-gradient(120deg, rgba(255,255,255,0.38), transparent 45%),
+        var(--paper);
+      font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    button, input, textarea, select { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .shell {
+      width: min(1240px, calc(100% - 32px));
+      margin: 24px auto 48px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-end;
+      padding: 18px 4px 26px;
+      border-bottom: 1px solid rgba(23, 24, 21, 0.16);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      font-family: "Iowan Old Style", "Songti SC", serif;
+      letter-spacing: -0.025em;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 0.98;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .version-box {
+      min-width: 160px;
+      text-align: right;
+    }
+
+    .version-box strong {
+      display: block;
+      font-size: 22px;
+    }
+
+    .version-box span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .workspace > * { min-width: 0; }
+
+    .sidebar, .stage {
+      background: rgba(255, 253, 248, 0.88);
+      border: 1px solid rgba(23, 24, 21, 0.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .sidebar {
+      align-self: start;
+      position: sticky;
+      top: 18px;
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .sidebar h2 {
+      margin: 4px 0 6px;
+      font-size: 20px;
+    }
+
+    .sidebar-intro {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .source {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--surface);
+    }
+
+    .source-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .source-name { font-size: 13px; font-weight: 700; }
+    .source-summary { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.ok { color: var(--green); background: var(--green-soft); }
+    .pill.need { color: var(--amber); background: var(--amber-soft); }
+    .pill.missing { color: var(--red); background: var(--red-soft); }
+    .pill.info { color: var(--blue); background: var(--blue-soft); }
+
+    .help-card {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 14px;
+      color: #f8f8f4;
+      background: var(--ink);
+    }
+
+    .help-card strong { display: block; margin-bottom: 6px; }
+    .help-card p { margin: 0; color: #c9c9c2; font-size: 12px; line-height: 1.6; }
+
+    .stage {
+      min-height: 720px;
+      min-width: 0;
+      border-radius: 28px;
+      overflow: hidden;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+      background: rgba(243, 240, 233, 0.62);
+    }
+
+    .step-button {
+      position: relative;
+      min-width: 0;
+      min-height: 72px;
+      padding: 14px 8px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      color: var(--muted);
+      background: transparent;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .step-button:last-child { border-right: 0; }
+    .step-button b { display: block; margin-bottom: 4px; font-size: 16px; color: inherit; }
+    .step-button.active { color: var(--blue); background: var(--surface); }
+    .step-button.done { color: var(--green); }
+    .step-button.active::after {
+      content: "";
+      position: absolute;
+      left: 18%; right: 18%; bottom: 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+      background: var(--blue);
+    }
+
+    .panel { display: none; padding: clamp(24px, 5vw, 56px); }
+    .panel.active { display: block; animation: rise 320ms ease both; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 26px;
+    }
+
+    .panel h2 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; }
+    .panel-subtitle { margin: 0; max-width: 680px; color: var(--muted); line-height: 1.7; }
+
+    .direction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+    .direction-card {
+      position: relative;
+      display: block;
+      min-height: 285px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .direction-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(31,33,27,.08); }
+    .direction-card.selected { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(23,104,229,.12); }
+    .direction-card input { position: absolute; opacity: 0; pointer-events: none; }
+    .direction-card h3 { margin: 18px 0 10px; font-size: 24px; }
+    .direction-card p { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .direction-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .field.full { grid-column: 1 / -1; }
+
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field small { color: var(--muted); font-weight: 500; }
+
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 13px 14px;
+      color: var(--ink);
+      background: var(--surface);
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    textarea { min-height: 112px; resize: vertical; line-height: 1.6; }
+    input:focus, textarea:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(23,104,229,.1); }
+    .needs-input input, .needs-input textarea, .needs-input select { border-color: #d99436; background: #fffaf0; }
+
+    .choice-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .choice {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      font-size: 13px;
+    }
+    .choice:has(input:checked) { border-color: var(--blue); background: var(--blue-soft); }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .summary-card { padding: 18px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+    .summary-card.wide { grid-column: 1 / -1; }
+    .summary-card span { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .summary-card strong { display: block; margin-top: 8px; font-size: 16px; line-height: 1.55; }
+
+    .actionbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 18px;
+      color: var(--ink);
+      background: var(--surface);
+      font-weight: 700;
+    }
+    .btn.primary { color: white; border-color: var(--blue); background: var(--blue); }
+    .btn.dark { color: white; border-color: var(--ink); background: var(--ink); }
+    .btn:disabled { cursor: not-allowed; opacity: .45; }
+
+    .notice {
+      display: none;
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: var(--green);
+      background: var(--green-soft);
+      font-size: 13px;
+    }
+    .notice.show { display: block; }
+
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .stage { order: 1; width: 100%; max-width: 100%; overflow: hidden; }
+      .sidebar { position: static; order: 2; }
+      .stepper { width: 100%; grid-template-columns: repeat(5, 20%); }
+      .panel, .summary-card { min-width: 0; }
+      .summary-card strong { overflow-wrap: anywhere; }
+      .direction-grid { grid-template-columns: 1fr; }
+      .direction-card { min-height: auto; }
+      .form-grid, .summary-grid { grid-template-columns: 1fr; }
+      .field.full, .summary-card.wide { grid-column: auto; }
+      .step-button span { display: none; }
+      .choice-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 18px, 1240px); margin-top: 8px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .version-box { min-width: auto; text-align: left; }
+      .panel { padding: 24px 18px; }
+      .step-button { min-height: 58px; }
+      .step-button b { font-size: 14px; }
+      .actionbar { align-items: stretch; flex-direction: column; }
+      .actions { width: 100%; }
+      .btn { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Product Definition Studio</p>
+        <h1 id="page-title">产品定义工作台</h1>
+      </div>
+      <div class="version-box">
+        <strong id="version-label">v0.1</strong>
+        <span>自动保存 · 本地运行</span>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <h2>素材状态</h2>
+        <p class="sidebar-intro">系统已从原始MD预填信息。你只需要确认缺失或有争议的部分。</p>
+        <div class="source-list" id="source-list"></div>
+        <div class="help-card">
+          <strong>怎样把反馈交回来？</strong>
+          <p>完成后点击“复制反馈”，回到对话直接粘贴；也可以下载Markdown或JSON文件后上传。</p>
+        </div>
+      </aside>
+
+      <section class="stage">
+        <nav class="stepper" aria-label="产品定义步骤">
+          <button class="step-button active" data-step="0"><b>01</b><span>素材确认</span></button>
+          <button class="step-button" data-step="1"><b>02</b><span>方向选择</span></button>
+          <button class="step-button" data-step="2"><b>03</b><span>结果定义</span></button>
+          <button class="step-button" data-step="3"><b>04</b><span>PRD确认</span></button>
+          <button class="step-button" data-step="4"><b>05</b><span>实验反馈</span></button>
+        </nav>
+
+        <section class="panel active" data-panel="0">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Step 01</p>
+              <h2>先确认系统理解得对不对</h2>
+              <p class="panel-subtitle">蓝色字段来自原始素材，橙色字段需要你确认。不要重复填写已经正确的信息。</p>
+            </div>
+          </div>
+          <div id="material-summary" class="summary-grid"></div>
+          <div class="actionbar">
+            <span></span>
+            <button class="btn primary" data-next>信息正确，选择方向</button>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="1">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Step 02</p>
+              <h2>你更想先验证哪个产品方向？</h2>
+              <p class="panel-subtitle">每张卡片都来自素材交叉分析。选择不是承诺开发，只是确定下一版PRD验证什么。</p>
+            </div>
+          </div>
+          <div class="direction-grid" id="direction-grid"></div>
+          <div class="actionbar">
+            <button class="btn" data-back>返回</button>
+            <button class="btn primary" data-next id="direction-next">用这个方向继续</button>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="2">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Step 03</p>
+              <h2>确认用户最终能得到什么</h2>
+              <p class="panel-subtitle">PRD最容易出错的不是功能，而是没有明确结果。带“需要确认”的字段会进入实验假设。</p>
+            </div>
+          </div>
+          <form id="definition-form" class="form-grid">
+            <div class="field">
+              <label for="targetUser">目标用户 <small>从素材预填</small></label>
+              <textarea id="targetUser" name="targetUser"></textarea>
+            </div>
+            <div class="field">
+              <label for="moment">具体时刻 <small>从素材预填</small></label>
+              <textarea id="moment" name="moment"></textarea>
+            </div>
+            <div class="field full">
+              <label for="problem">核心问题 <small>用户现在为什么卡住</small></label>
+              <textarea id="problem" name="problem"></textarea>
+            </div>
+            <div class="field full needs-input">
+              <label for="minimumResult">最小用户结果 <small>需要确认 · 一次体验后得到什么</small></label>
+              <textarea id="minimumResult" name="minimumResult" required></textarea>
+            </div>
+            <div class="field">
+              <label for="businessResult">业务结果 <small>产品希望推动什么</small></label>
+              <select id="businessResult" name="businessResult">
+                <option value="预约一次付费服务">预约一次付费服务</option>
+                <option value="添加微信并主动描述问题">添加微信并主动描述问题</option>
+                <option value="购买低价产品">购买低价产品</option>
+                <option value="留下联系方式">留下联系方式</option>
+                <option value="回到IP内容继续关注">回到IP内容继续关注</option>
+              </select>
+            </div>
+            <div class="field needs-input">
+              <label for="serviceExit">承接服务 <small>需要确认</small></label>
+              <input id="serviceExit" name="serviceExit" type="text" placeholder="例如：529元单次教练" />
+            </div>
+            <div class="field full">
+              <label for="beforeBelief">使用前，用户以为 <small>故事起点</small></label>
+              <textarea id="beforeBelief" name="beforeBelief"></textarea>
+            </div>
+            <div class="field full needs-input">
+              <label for="afterDiscovery">使用后，用户发现 <small>需要证据支持的认知转折</small></label>
+              <textarea id="afterDiscovery" name="afterDiscovery"></textarea>
+            </div>
+            <div class="field full">
+              <label for="nextAction">接下来，用户可以 <small>必须具体可行动</small></label>
+              <textarea id="nextAction" name="nextAction"></textarea>
+            </div>
+          </form>
+          <div class="actionbar">
+            <button class="btn" data-back>返回</button>
+            <button class="btn primary" data-next>确认结果，预览PRD输入</button>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="3">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Step 04</p>
+              <h2>这是将进入PRD的定义</h2>
+              <p class="panel-subtitle">检查是否具体、可信、可验证。确认后把反馈交回Skill，它会生成PRD和实验记录。</p>
+            </div>
+            <span class="pill info">尚未生成PRD</span>
+          </div>
+          <div id="prd-summary" class="summary-grid"></div>
+          <div class="actionbar">
+            <button class="btn" data-back>返回修改</button>
+            <div class="actions">
+              <button class="btn" data-export="json">下载JSON</button>
+              <button class="btn" data-export="md">下载Markdown</button>
+              <button class="btn primary" data-copy="definition">复制反馈</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="4">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Step 05</p>
+              <h2>这一版实际发生了什么？</h2>
+              <p class="panel-subtitle">只填观察到的事实。系统会根据失败位置决定修改体验、修改结果，还是返回寻找新方向。</p>
+            </div>
+          </div>
+          <div id="copy-notice" class="notice">反馈已复制。请回到对话中粘贴。</div>
+          <form id="experiment-form" class="form-grid">
+            <div class="field">
+              <label for="experimentVersion">测试版本</label>
+              <input id="experimentVersion" name="experimentVersion" type="text" />
+            </div>
+            <div class="field">
+              <label for="sampleSize">测试人数 <small>不确定可留空</small></label>
+              <input id="sampleSize" name="sampleSize" type="number" min="0" />
+            </div>
+            <div class="field full">
+              <label>最接近的实验结果</label>
+              <div class="choice-row" id="outcome-choices">
+                <label class="choice"><input type="radio" name="outcome" value="通过：用户得到结果并采取行动" />通过</label>
+                <label class="choice"><input type="radio" name="outcome" value="部分通过：有人得到结果，但仍有明显问题" />部分通过</label>
+                <label class="choice"><input type="radio" name="outcome" value="未通过：当前假设没有成立" />未通过</label>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="failureStage">问题主要发生在哪里？</label>
+              <select id="failureStage" name="failureStage">
+                <option value="没有明显问题">没有明显问题</option>
+                <option value="用户不进入">用户不进入</option>
+                <option value="用户开始但不完成">用户开始但不完成</option>
+                <option value="完成但觉得没有价值">完成但觉得没有价值</option>
+                <option value="有结果但不愿传播">有结果但不愿传播</option>
+                <option value="有传播但不转化">有传播但不转化</option>
+                <option value="信息不足，无法判断">信息不足，无法判断</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="userQuote">用户原话 <small>尽量原样记录</small></label>
+              <textarea id="userQuote" name="userQuote" placeholder="例如：我看完还是不知道该怎么选。"></textarea>
+            </div>
+            <div class="field">
+              <label for="whatHappened">实际发生了什么</label>
+              <textarea id="whatHappened" name="whatHappened"></textarea>
+            </div>
+            <div class="field">
+              <label for="whatDidNotHappen">预期但没有发生什么</label>
+              <textarea id="whatDidNotHappen" name="whatDidNotHappen"></textarea>
+            </div>
+            <div class="field full">
+              <label>你倾向的下一步 <small>Skill会根据证据复核</small></label>
+              <div class="choice-row">
+                <label class="choice"><input type="radio" name="decision" value="保留方向，修改体验" />修改体验</label>
+                <label class="choice"><input type="radio" name="decision" value="保留用户问题，修改最小结果" />修改结果</label>
+                <label class="choice"><input type="radio" name="decision" value="停止当前方向，重新寻找产品化方向" />重新找方向</label>
+              </div>
+            </div>
+          </form>
+          <div class="actionbar">
+            <button class="btn" data-step-target="3">查看当前定义</button>
+            <div class="actions">
+              <button class="btn" data-export="experiment-json">下载JSON</button>
+              <button class="btn dark" data-copy="experiment">复制实验反馈</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    window.PRODUCT_STUDIO_CONFIG = window.PRODUCT_STUDIO_CONFIG || {
+      productName: "未命名内容型产品",
+      version: "v0.1",
+      sources: [
+        { name: "服务列表.md", status: "received", summary: "已读取服务、价格和商业出口" },
+        { name: "服务蓝图.md", status: "received", summary: "已读取服务路径和转化卡点" },
+        { name: "用户同理心地图.md", status: "confirm", summary: "用户和场景已提取，仍需确认" },
+        { name: "运营内容.md", status: "received", summary: "已读取内容主题和表达方向" },
+        { name: "真实案例/方法论", status: "missing", summary: "认知转折缺少直接证据" }
+      ],
+      materialSummary: {
+        targetUser: "请由Skill从素材中预填",
+        moment: "请由Skill从素材中预填",
+        serviceBreak: "请由Skill从服务蓝图中预填",
+        contentSignal: "请由Skill从运营内容中预填"
+      },
+      directions: [
+        {
+          id: "direction-a",
+          title: "方向A",
+          description: "请由Skill写入用户、具体时刻、最小结果和商业出口。",
+          recommended: true,
+          evidence: "证据较强",
+          story: "存在待验证的认知转折",
+          prefill: {}
+        },
+        {
+          id: "direction-b",
+          title: "方向B",
+          description: "请由Skill写入第二个产品化方向。",
+          evidence: "证据一般",
+          story: "故事潜力待验证",
+          prefill: {}
+        },
+        {
+          id: "custom",
+          title: "都不合适",
+          description: "保留已有素材，但补充一个你更想验证的方向。",
+          evidence: "用户补充",
+          story: "重新定义",
+          prefill: {}
+        }
+      ],
+      definition: {
+        targetUser: "",
+        moment: "",
+        problem: "",
+        minimumResult: "",
+        businessResult: "预约一次付费服务",
+        serviceExit: "",
+        beforeBelief: "",
+        afterDiscovery: "",
+        nextAction: ""
+      }
+    };
+
+    const config = window.PRODUCT_STUDIO_CONFIG;
+    const storageKey = `product-studio:${config.productName}`;
+    let state = {
+      step: 0,
+      selectedDirection: config.directions.find(item => item.recommended)?.id || config.directions[0]?.id || "",
+      definition: { ...config.definition },
+      experiment: {},
+      ...JSON.parse(localStorage.getItem(storageKey) || "{}")
+    };
+
+    const statusMap = {
+      received: ["已读取", "ok"],
+      confirm: ["待确认", "need"],
+      missing: ["缺少", "missing"]
+    };
+
+    const $ = selector => document.querySelector(selector);
+    const $$ = selector => [...document.querySelectorAll(selector)];
+
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>'"]/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+      })[char]);
+    }
+
+    function save() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function renderSources() {
+      $("#source-list").innerHTML = config.sources.map(source => {
+        const [label, klass] = statusMap[source.status] || ["待确认", "need"];
+        return `<article class="source">
+          <div class="source-top">
+            <span class="source-name">${escapeHtml(source.name)}</span>
+            <span class="pill ${klass}">${label}</span>
+          </div>
+          <p class="source-summary">${escapeHtml(source.summary)}</p>
+        </article>`;
+      }).join("");
+    }
+
+    function renderMaterialSummary() {
+      const labels = {
+        targetUser: "目标用户",
+        moment: "具体时刻",
+        serviceBreak: "服务卡点",
+        contentSignal: "内容信号"
+      };
+      $("#material-summary").innerHTML = Object.entries(config.materialSummary).map(([key, value]) => `
+        <article class="summary-card">
+          <span>${labels[key] || key}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </article>`).join("");
+    }
+
+    function renderDirections() {
+      $("#direction-grid").innerHTML = config.directions.map(direction => `
+        <label class="direction-card ${state.selectedDirection === direction.id ? "selected" : ""}">
+          <input type="radio" name="direction" value="${escapeHtml(direction.id)}" ${state.selectedDirection === direction.id ? "checked" : ""} />
+          ${direction.recommended ? '<span class="pill info">建议先验证</span>' : '<span class="pill need">备选方向</span>'}
+          <h3>${escapeHtml(direction.title)}</h3>
+          <p>${escapeHtml(direction.description)}</p>
+          <div class="direction-meta">
+            <span class="pill ok">${escapeHtml(direction.evidence)}</span>
+            <span class="pill need">${escapeHtml(direction.story)}</span>
+          </div>
+        </label>`).join("");
+
+      $$('input[name="direction"]').forEach(input => input.addEventListener("change", event => {
+        state.selectedDirection = event.target.value;
+        const selected = config.directions.find(item => item.id === state.selectedDirection);
+        state.definition = { ...state.definition, ...(selected?.prefill || {}) };
+        save();
+        renderDirections();
+        fillDefinition();
+      }));
+    }
+
+    function fillDefinition() {
+      Object.entries(state.definition).forEach(([key, value]) => {
+        const field = document.getElementById(key);
+        if (field) field.value = value || "";
+      });
+    }
+
+    function collectForm(form) {
+      const data = {};
+      new FormData(form).forEach((value, key) => { data[key] = value; });
+      return data;
+    }
+
+    function renderPrdSummary() {
+      state.definition = { ...state.definition, ...collectForm($("#definition-form")) };
+      const selected = config.directions.find(item => item.id === state.selectedDirection);
+      const d = state.definition;
+      const story = `我原来以为${d.beforeBelief || "____"}，后来发现${d.afterDiscovery || "____"}，接下来我准备${d.nextAction || "____"}。`;
+      const items = [
+        ["产品方向", selected?.title || "尚未选择"],
+        ["目标用户", d.targetUser || "待补充"],
+        ["具体时刻", d.moment || "待补充"],
+        ["最小用户结果", d.minimumResult || "待补充"],
+        ["业务结果", d.businessResult || "待补充"],
+        ["承接服务", d.serviceExit || "待补充"],
+        ["可传播故事", story, true]
+      ];
+      $("#prd-summary").innerHTML = items.map(([label, value, wide]) => `
+        <article class="summary-card ${wide ? "wide" : ""}">
+          <span>${label}</span><strong>${escapeHtml(value)}</strong>
+        </article>`).join("");
+      save();
+    }
+
+    function setStep(step) {
+      state.step = Math.max(0, Math.min(4, Number(step)));
+      $$(".panel").forEach(panel => panel.classList.toggle("active", Number(panel.dataset.panel) === state.step));
+      $$(".step-button").forEach((button, index) => {
+        button.classList.toggle("active", index === state.step);
+        button.classList.toggle("done", index < state.step);
+      });
+      if (state.step === 3) renderPrdSummary();
+      save();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function buildDefinitionPayload() {
+      renderPrdSummary();
+      const selected = config.directions.find(item => item.id === state.selectedDirection);
+      return {
+        type: "product-definition-feedback",
+        productName: config.productName,
+        version: config.version,
+        selectedDirection: selected?.title || state.selectedDirection,
+        definition: state.definition
+      };
+    }
+
+    function buildExperimentPayload() {
+      state.experiment = collectForm($("#experiment-form"));
+      save();
+      return {
+        type: "product-experiment-feedback",
+        productName: config.productName,
+        version: state.experiment.experimentVersion || config.version,
+        experiment: state.experiment
+      };
+    }
+
+    function payloadToMarkdown(payload) {
+      if (payload.type === "product-experiment-feedback") {
+        const e = payload.experiment;
+        return `# 产品实验反馈\n\n- 产品：${payload.productName}\n- 版本：${payload.version}\n- 测试人数：${e.sampleSize || "未填写"}\n- 实验结论：${e.outcome || "未选择"}\n- 失败位置：${e.failureStage || "未选择"}\n- 用户原话：${e.userQuote || "未填写"}\n- 实际发生：${e.whatHappened || "未填写"}\n- 没有发生：${e.whatDidNotHappen || "未填写"}\n- 倾向决策：${e.decision || "未选择"}\n`;
+      }
+      const d = payload.definition;
+      return `# 产品定义反馈\n\n- 产品：${payload.productName}\n- 版本：${payload.version}\n- 选择方向：${payload.selectedDirection}\n- 目标用户：${d.targetUser || "未填写"}\n- 具体时刻：${d.moment || "未填写"}\n- 核心问题：${d.problem || "未填写"}\n- 最小用户结果：${d.minimumResult || "未填写"}\n- 业务结果：${d.businessResult || "未填写"}\n- 承接服务：${d.serviceExit || "未填写"}\n- 使用前认为：${d.beforeBelief || "未填写"}\n- 使用后发现：${d.afterDiscovery || "未填写"}\n- 下一步行动：${d.nextAction || "未填写"}\n`;
+    }
+
+    async function copyPayload(type) {
+      const payload = type === "experiment" ? buildExperimentPayload() : buildDefinitionPayload();
+      await navigator.clipboard.writeText(payloadToMarkdown(payload));
+      $("#copy-notice").classList.add("show");
+      setTimeout(() => $("#copy-notice").classList.remove("show"), 2600);
+    }
+
+    function download(name, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = name;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportPayload(type) {
+      const isExperiment = type.startsWith("experiment");
+      const payload = isExperiment ? buildExperimentPayload() : buildDefinitionPayload();
+      const extension = type.endsWith("json") ? "json" : "md";
+      const content = extension === "json" ? JSON.stringify(payload, null, 2) : payloadToMarkdown(payload);
+      download(`${config.productName}-${isExperiment ? "实验反馈" : "产品定义反馈"}.${extension}`, content, extension === "json" ? "application/json" : "text/markdown");
+    }
+
+    $("#page-title").textContent = `${config.productName} · 产品定义工作台`;
+    $("#version-label").textContent = config.version;
+    renderSources();
+    renderMaterialSummary();
+    renderDirections();
+    fillDefinition();
+    $("#experimentVersion").value = config.version;
+
+    $$(".step-button").forEach(button => button.addEventListener("click", () => setStep(button.dataset.step)));
+    $$('[data-next]').forEach(button => button.addEventListener("click", () => setStep(state.step + 1)));
+    $$('[data-back]').forEach(button => button.addEventListener("click", () => setStep(state.step - 1)));
+    $$('[data-step-target]').forEach(button => button.addEventListener("click", () => setStep(button.dataset.stepTarget)));
+    $$('[data-copy]').forEach(button => button.addEventListener("click", () => copyPayload(button.dataset.copy)));
+    $$('[data-export]').forEach(button => button.addEventListener("click", () => exportPayload(button.dataset.export)));
+    $("#definition-form").addEventListener("input", () => {
+      state.definition = { ...state.definition, ...collectForm($("#definition-form")) };
+      save();
+    });
+    $("#experiment-form").addEventListener("input", () => {
+      state.experiment = collectForm($("#experiment-form"));
+      save();
+    });
+    setStep(state.step || 0);
+  </script>
+</body>
+</html>
